@@ -99,6 +99,48 @@ namespace Runtime.Player
 
         private void HandleKeyboardMovement()
         {
+            var moveAmount = GetKeyboardMoveAmount();
+            moveAmount += GetMouseMoveAmount();
+
+            HandleMouseZoom(moveAmount);
+        }
+
+        private Vector2 GetMouseMoveAmount()
+        {
+            Vector2 moveAmount = Vector2.zero;
+
+            if (!cameraConfig.enableEdgePan)
+                return moveAmount;
+            
+            Vector2 mousePosition = Mouse.current.position.ReadValue();
+            int screenWidth = Screen.width;
+            int screenHeight = Screen.height;
+
+            if (mousePosition.x <= cameraConfig.edgePanSize)
+            {
+                moveAmount.x -= cameraConfig.mousePanSpeed;
+            }
+
+            if (mousePosition.x >= screenWidth - cameraConfig.edgePanSize)
+            {
+                moveAmount.x += cameraConfig.mousePanSpeed;
+            }
+
+            if (mousePosition.y >= screenHeight - cameraConfig.edgePanSize)
+            {
+                moveAmount.y += cameraConfig.mousePanSpeed;
+            }
+
+            if (mousePosition.y <= cameraConfig.edgePanSize)
+            {
+                moveAmount.y -= cameraConfig.mousePanSpeed;
+            }
+            
+            return moveAmount;
+        }
+
+        private Vector2 GetKeyboardMoveAmount()
+        {
             Vector2 moveAmount = Vector2.zero;
             if (Keyboard.current.upArrowKey.isPressed || Keyboard.current.wKey.isPressed)
             {
@@ -120,7 +162,7 @@ namespace Runtime.Player
                 moveAmount.y -= cameraConfig.keyboardPanSpeed;
             }
 
-            HandleMouseZoom(moveAmount);
+            return moveAmount;
         }
 
         private void HandleMouseZoom(Vector2 moveAmount)

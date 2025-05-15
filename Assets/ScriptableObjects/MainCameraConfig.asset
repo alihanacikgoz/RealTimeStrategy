@@ -12,3 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d2771d6021c849b991f63771a6cc35c8, type: 3}
   m_Name: MainCameraConfig
   m_EditorClassIdentifier: 
+  keyboardPanSpeed: 10
+  rotationSpeed: 0.05
+  mouseZoomSpeed: 100
+  zoomSpeed: 0.05
+  minZoomDistance: 7.5
+  enableEdgePan: 1
+  mousePanSpeed: 15
+  edgePanSize: 5

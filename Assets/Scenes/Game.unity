@@ -4207,6 +4207,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cameraTarget: {fileID: 177182588}
   cinemachineCamera: {fileID: 199861617}
+  cameraConfig: {fileID: 11400000, guid: d42aaf55f9629464b8c6b4c0dd51c4cc, type: 2}
 --- !u!1001 &332197402
 PrefabInstance:
   m_ObjectHideFlags: 0
