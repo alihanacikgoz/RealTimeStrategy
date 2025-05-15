@@ -1,3 +1,6 @@
+using System;
+using Runtime.ScriptableObjects;
+using Runtime.Singletons;
 using Sirenix.OdinInspector;
 using Unity.Cinemachine;
 using UnityEngine;
@@ -10,19 +13,13 @@ namespace Runtime.Player
         [FoldoutGroup("References"), SerializeField]
         private Transform cameraTarget;
 
-        [FoldoutGroup("Pan Variables"), SerializeField]
-        private float
-            keyboardPanSpeed = 1,
-            mouseZoomSpeed = 1,
-            zoomSpeed = 20,
-            minZoomDistance = 7.5f;
-
-        [FoldoutGroup("Rotation Variables"), SerializeField]
-        private float
-            rotationSpeed = 20;
-
         [FoldoutGroup("References"), SerializeField]
         private CinemachineCamera cinemachineCamera;
+
+        [FoldoutGroup("Configs"), SerializeField]
+        private CameraConfig cameraConfig;
+
+        [FoldoutGroup("References")] private InputSystem_Actions _inputSystemActions;
 
 
         #region Private Variables
@@ -31,8 +28,11 @@ namespace Runtime.Player
         private Vector3 _startingFollowOffset;
         private CinemachineFollow _cinemachineFollow;
 
+        private InputAction.CallbackContext _jump;
+
         #endregion
 
+        #region Unity Callbacks
 
         private void Awake()
         {
@@ -47,7 +47,7 @@ namespace Runtime.Player
 
         private void Start()
         {
-            _defaultPanSpeed = keyboardPanSpeed;
+            _defaultPanSpeed = cameraConfig.keyboardPanSpeed;
         }
 
         void Update()
@@ -57,9 +57,14 @@ namespace Runtime.Player
             HandleRotation();
         }
 
+        #endregion
+
+        #region Custom Methods
+
         private bool ShouldSetRotationStartTime()
         {
-            return Keyboard.current.pageUpKey.wasPressedThisFrame || Keyboard.current.pageDownKey.wasPressedThisFrame || Keyboard.current.pageUpKey.wasReleasedThisFrame || Keyboard.current.pageDownKey.wasReleasedThisFrame;
+            return Keyboard.current.pageUpKey.wasPressedThisFrame || Keyboard.current.pageDownKey.wasPressedThisFrame ||
+                   Keyboard.current.pageUpKey.wasReleasedThisFrame || Keyboard.current.pageDownKey.wasReleasedThisFrame;
         }
 
         private void HandleRotation()
@@ -68,46 +73,51 @@ namespace Runtime.Player
             {
                 _rotationStartTime = Time.time;
             }
-            float rotationTime = Mathf.Clamp01((Time.time - _rotationStartTime) * rotationSpeed);
-            
+
+            float rotationTime = Mathf.Clamp01((Time.time - _rotationStartTime) * cameraConfig.rotationSpeed);
+
             Vector3 targetFollowOffset;
 
             if (Keyboard.current.pageDownKey.isPressed)
             {
                 targetFollowOffset = new Vector3(_maxRotationAmount, _cinemachineFollow.FollowOffset.y, 0);
-            } else if (Keyboard.current.pageUpKey.isPressed)
+            }
+            else if (Keyboard.current.pageUpKey.isPressed)
             {
                 targetFollowOffset = new Vector3(-_maxRotationAmount, _cinemachineFollow.FollowOffset.y, 0);
             }
             else
             {
-                targetFollowOffset = new Vector3(_startingFollowOffset.x, _cinemachineFollow.FollowOffset.y, _startingFollowOffset.z);
+                targetFollowOffset = new Vector3(_startingFollowOffset.x, _cinemachineFollow.FollowOffset.y,
+                    _startingFollowOffset.z);
             }
-            
-            _cinemachineFollow.FollowOffset = Vector3.Slerp(_cinemachineFollow.FollowOffset, targetFollowOffset, rotationTime);;
+
+            _cinemachineFollow.FollowOffset =
+                Vector3.Slerp(_cinemachineFollow.FollowOffset, targetFollowOffset, rotationTime);
+            ;
         }
 
         private void HandleKeyboardMovement()
         {
             Vector2 moveAmount = Vector2.zero;
-            if (Keyboard.current.upArrowKey.isPressed)
+            if (Keyboard.current.upArrowKey.isPressed || Keyboard.current.wKey.isPressed)
             {
-                moveAmount.y += keyboardPanSpeed;
+                moveAmount.y += cameraConfig.keyboardPanSpeed;
             }
 
-            if (Keyboard.current.leftArrowKey.isPressed)
+            if (Keyboard.current.leftArrowKey.isPressed || Keyboard.current.aKey.isPressed)
             {
-                moveAmount.x -= keyboardPanSpeed;
+                moveAmount.x -= cameraConfig.keyboardPanSpeed;
             }
 
-            if (Keyboard.current.rightArrowKey.isPressed)
+            if (Keyboard.current.rightArrowKey.isPressed || Keyboard.current.dKey.isPressed)
             {
-                moveAmount.x += keyboardPanSpeed;
+                moveAmount.x += cameraConfig.keyboardPanSpeed;
             }
 
-            if (Keyboard.current.downArrowKey.isPressed)
+            if (Keyboard.current.downArrowKey.isPressed || Keyboard.current.sKey.isPressed)
             {
-                moveAmount.y -= keyboardPanSpeed;
+                moveAmount.y -= cameraConfig.keyboardPanSpeed;
             }
 
             HandleMouseZoom(moveAmount);
@@ -120,7 +130,7 @@ namespace Runtime.Player
                 if (cameraTarget.position.y >= -5.0 || cameraTarget.position.y <= 15.0)
                 {
                     _cameraZoomOnYAxis = Mathf.Clamp(Mouse.current.scroll.ReadValue().y, -5, 15) *
-                                         (mouseZoomSpeed * Time.deltaTime);
+                                         (cameraConfig.mouseZoomSpeed * Time.deltaTime);
                     cameraTarget.position =
                         new Vector3(cameraTarget.position.x, _cameraZoomOnYAxis, cameraTarget.position.z);
                 }
@@ -146,13 +156,13 @@ namespace Runtime.Player
 
             Vector3 targetFollowOffset;
 
-            float zoomTime = Mathf.Clamp01((Time.time - _zoomStartTime) * zoomSpeed);
+            float zoomTime = Mathf.Clamp01((Time.time - _zoomStartTime) * cameraConfig.zoomSpeed);
 
             if (Keyboard.current.shiftKey.isPressed)
             {
                 targetFollowOffset = new Vector3(
                     _cinemachineFollow.FollowOffset.x,
-                    minZoomDistance,
+                    cameraConfig.minZoomDistance,
                     _cinemachineFollow.FollowOffset.z
                 );
             }
@@ -168,5 +178,7 @@ namespace Runtime.Player
             _cinemachineFollow.FollowOffset =
                 Vector3.Lerp(_cinemachineFollow.FollowOffset, targetFollowOffset, zoomTime);
         }
+
+        #endregion
     }
 }
